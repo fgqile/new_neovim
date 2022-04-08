@@ -1,0 +1,6 @@
+[submodule "sub_model/lspkind-nvim"]
+	path = sub_model/lspkind-nvim
+	url = https://github.com/onsails/lspkind-nvim
+[submodule "sub_model/project_nvim"]
+	path = sub_model/project_nvim
+	url = https://github.com/ahmedkhalf/project.nvim.git
