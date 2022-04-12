@@ -54,6 +54,6 @@ nvim_tree.setup({
     -- wsl install -g wsl-open
     -- https://github.com/4U6U57/wsl-open/
     system_open = {
-        cmd = 'open',
+        cmd = nil, --mac 下是 cmd='open' widonws的wls下是"wls-open"
     },
 })
