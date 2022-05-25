@@ -4,11 +4,8 @@ vim.g.maplocalleader = " "
 
 -- 本地变量
 local map = vim.api.nvim_set_keymap
-
-local opt = {
-  noremap = true,
-  silent = true
-}
+-- 复用opt参数
+local opt = { noremap = true,silent = true }
 
 -- Modes
 --   normal_mode = "n",
@@ -105,14 +102,9 @@ local pluginKeys = {}
 map("n", "<A-m>", ":NvimTreeToggle<CR>", opt)
 -- 列表快捷键
 pluginKeys.nvimTreeList = { -- 打开文件或文件夹
+{ key = {"<CR>", "o", "<2-LeftMouse>"}, action = "edit" }, -- 分屏打开文件
+{ key = "v", action = "vsplit"},
 {
-    key = {"<CR>", "o", "<2-LeftMouse>"},
-    action = "edit"
-  }, -- 分屏打开文件
-{
-    key = "v",
-    action = "vsplit"
-  }, {
     key = "h",
     action = "split"
   }, -- 显示隐藏文件

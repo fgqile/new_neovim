@@ -35,14 +35,14 @@ packer.startup({
       requires = "kyazdani42/nvim-web-devicons"
     })
     -- bufferline
-    use({
+    use({ 
       "akinsho/bufferline.nvim",
-      requires = {"kyazdani42/nvim-web-devicons", "moll/vim-bbye"}
+      requires = {"kyazdani42/nvim-web-devicons","moll/vim-bbye"}
     })
     -- lualine
-    use({
-      "nvim-lualine/lualine.nvim",
-      requires = {"kyazdani42/nvim-web-devicons"}
+    use({ 
+      "nvim-lualine/lualine.nvim", 
+      requires = {"kyazdani42/nvim-web-devicons"} 
     })
     use("arkav/lualine-lsp-progress")
     -- telescope
@@ -116,7 +116,7 @@ packer.startup({
     max_jobs = 16,
     -- 自定义源
     git = {
-      -- default_url_format = "https://hub.fastgit.xyz/%s",
+      default_url_format = "https://hub.fastgit.xyz/%s",
       -- default_url_format = "https://mirror.ghproxy.com/https://github.com/%s",
       -- default_url_format = "https://gitcode.net/mirrors/%s",
       -- default_url_format = "https://gitclone.com/github.com/%s",

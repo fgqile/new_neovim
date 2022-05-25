@@ -10,7 +10,7 @@ end
 local list_keys = require('keybindings').nvimTreeList
 
 nvim_tree.setup({
-    -- 不显示 git 状态图标
+    -- 显示 git 状态图标
     git = {
         enable = false,
     },
@@ -30,15 +30,15 @@ nvim_tree.setup({
         width = 40,
         -- 也可以 'right'
         side = 'left',
-        -- 隐藏根目录
-        hide_root_folder = false,
+        -- 显示根目录
+        hide_root_folder = true,
         -- 自定义列表中快捷键
         mappings = {
             custom_only = false,
             list = list_keys,
         },
-        -- 不显示行数
-        number = false,
+        -- 显示行数
+        number = true,
         relativenumber = false,
         -- 显示图标
         signcolumn = 'yes',
