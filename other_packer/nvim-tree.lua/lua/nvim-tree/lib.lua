@@ -1,39 +1,19 @@
 local api = vim.api
 
 local renderer = require "nvim-tree.renderer"
-local diagnostics = require "nvim-tree.diagnostics"
 local view = require "nvim-tree.view"
 local core = require "nvim-tree.core"
+local utils = require "nvim-tree.utils"
 
 local M = {
   target_winid = nil,
 }
-
-function M.get_nodes_by_line(nodes_all, line_start)
-  local nodes_by_line = {}
-  local line = line_start
-  local function iter(nodes)
-    for _, node in ipairs(nodes) do
-      nodes_by_line[line] = node
-      line = line + 1
-      if node.open == true then
-        local child = iter(node.nodes)
-        if child ~= nil then
-          return child
-        end
-      end
-    end
-  end
-  iter(nodes_all)
-  return nodes_by_line
-end
 
 function M.get_node_at_cursor()
   if not core.get_explorer() then
     return
   end
   local winnr = view.get_winnr()
-  local hide_root_folder = view.View.hide_root_folder
   if not winnr then
     return
   end
@@ -41,17 +21,14 @@ function M.get_node_at_cursor()
   local line = cursor[1]
   if view.is_help_ui() then
     local help_lines = require("nvim-tree.renderer.help").compute_lines()
-    local help_text = M.get_nodes_by_line(help_lines, 1)[line]
+    local help_text = utils.get_nodes_by_line(help_lines, 1)[line]
     return { name = help_text }
   else
-    if line == 1 and core.get_explorer().cwd ~= "/" and not hide_root_folder then
+    if line == 1 and core.get_explorer().cwd ~= "/" and view.is_root_folder_visible() then
       return { name = ".." }
     end
 
-    if core.get_explorer().cwd == "/" then
-      line = line + 1
-    end
-    return M.get_nodes_by_line(core.get_explorer().nodes, view.View.hide_root_folder and 1 or 2)[line]
+    return utils.get_nodes_by_line(core.get_explorer().nodes, core.get_nodes_starting_line())[line]
   end
 end
 
@@ -75,7 +52,6 @@ function M.expand_or_collapse(node)
   end
 
   renderer.draw()
-  diagnostics.update()
 end
 
 function M.set_target_win()
@@ -126,6 +102,7 @@ function M.open(cwd)
   else
     open_view_and_draw()
   end
+  view.restore_tab_state()
 end
 
 -- @deprecated: use nvim-tree.actions.collapse-all.fn

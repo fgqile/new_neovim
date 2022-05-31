@@ -99,15 +99,15 @@ end
 -- get the node from the tree that matches the predicate
 -- @param nodes list of node
 -- @param fn    function(node): boolean
-function M.find_node(_nodes, _fn)
-  local function iter(nodes, fn)
+function M.find_node(nodes, fn)
+  local function iter(nodes_, fn_)
     local i = 1
-    for _, node in ipairs(nodes) do
-      if fn(node) then
+    for _, node in ipairs(nodes_) do
+      if fn_(node) then
         return node, i
       end
       if node.open and #node.nodes > 0 then
-        local n, idx = iter(node.nodes, fn)
+        local n, idx = iter(node.nodes, fn_)
         i = i + idx
         if n then
           return n, i
@@ -118,9 +118,32 @@ function M.find_node(_nodes, _fn)
     end
     return nil, i
   end
-  local node, i = iter(_nodes, _fn)
+  local node, i = iter(nodes, fn)
   i = require("nvim-tree.view").View.hide_root_folder and i - 1 or i
   return node, i
+end
+
+-- return visible nodes indexed by line
+-- @param nodes_all list of node
+-- @param line_start first index
+---@return table
+function M.get_nodes_by_line(nodes_all, line_start)
+  local nodes_by_line = {}
+  local line = line_start
+  local function iter(nodes)
+    for _, node in ipairs(nodes) do
+      nodes_by_line[line] = node
+      line = line + 1
+      if node.open == true then
+        local child = iter(node.nodes)
+        if child ~= nil then
+          return child
+        end
+      end
+    end
+  end
+  iter(nodes_all)
+  return nodes_by_line
 end
 
 ---Matching executable files in Windows.
@@ -137,15 +160,23 @@ function M.is_windows_exe(ext)
   return pathexts[ext:upper()]
 end
 
-function M.rename_loaded_buffers(old_name, new_name)
+function M.rename_loaded_buffers(old_path, new_path)
   for _, buf in pairs(a.nvim_list_bufs()) do
     if a.nvim_buf_is_loaded(buf) then
-      if a.nvim_buf_get_name(buf) == old_name then
-        a.nvim_buf_set_name(buf, new_name)
-        -- to avoid the 'overwrite existing file' error message on write
-        vim.api.nvim_buf_call(buf, function()
-          vim.cmd "silent! w!"
-        end)
+      local buf_name = a.nvim_buf_get_name(buf)
+      local exact_match = buf_name == old_path
+      local child_match = (
+        buf_name:sub(1, #old_path) == old_path and buf_name:sub(#old_path + 1, #old_path + 1) == path_separator
+      )
+      if exact_match or child_match then
+        a.nvim_buf_set_name(buf, new_path .. buf_name:sub(#old_path + 1))
+        -- to avoid the 'overwrite existing file' error message on write for
+        -- normal files
+        if a.nvim_buf_get_option(buf, "buftype") == "" then
+          a.nvim_buf_call(buf, function()
+            vim.cmd "silent! write!"
+          end)
+        end
       end
     end
   end
@@ -200,6 +231,14 @@ function M.format_bytes(bytes)
   pow = pow + 1
 
   return (units[pow] == nil) and (bytes .. "B") or (value .. units[pow])
+end
+
+function M.key_by(tbl, key)
+  local keyed = {}
+  for _, val in ipairs(tbl) do
+    keyed[val[key]] = val
+  end
+  return keyed
 end
 
 return M

@@ -113,6 +113,20 @@ local data = {
         after  = [[(   many char (|))]]
     },
     {
+        filetype = 'vim',
+        name='add bracket inside quote when nextchar is ignore',
+        key = [[{]],
+        before = [["|"]],
+        after = [["{|}"]]
+    },
+    {
+        filetype = '',
+        name='add bracket inside quote when next char is ignore',
+        key = [[{]],
+        before = [[" |"]],
+        after = [[" {|}"]]
+    },
+    {
         name = "move right on quote line " ,
         key    = [["]],
         before = [["|"]],
@@ -581,6 +595,55 @@ local data = {
         key = [["ab]],
         before = [[   | aaa]],
         after = [[   "ab| aaa]]
+    },
+    {
+        setup_func = function()
+            npairs.add_rule(
+                Rule('struct%s[a-zA-Z]+%s?{$', '};' )
+                    :use_regex(true, "{")
+            )
+        end,
+        filetype = 'javascript',
+        name = 'custom endwise rule',
+        key = [[{]],
+        before = [[struct abc | ]],
+        after = [[struct abc {|};]],
+    },
+    {
+        setup_func = function()
+            npairs.clear_rules()
+            npairs.add_rule(Rule("{", "}"):end_wise())
+        end,
+        filetype = 'javascript',
+        name = 'custom endwise rule',
+        key = [[<cr>]],
+        before = [[function () {| ]],
+        after = {
+            [[function () {]],
+            [[|]],
+            [[}]],
+        },
+    },
+    {
+        setup_func = function()
+            npairs.clear_rules()
+            npairs.add_rule(
+                Rule("{", "")
+                    :replace_endpair(function ()
+                        return "}"
+                    end)
+                    :end_wise()
+            )
+        end,
+        filetype = 'javascript',
+        name = 'custom endwise rule with custom end_pair',
+        key = [[<cr>]],
+        before = [[function () {| ]],
+        after = {
+            [[function () {]],
+            [[|]],
+            [[}]],
+        },
     },
 }
 

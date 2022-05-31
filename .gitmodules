@@ -10,3 +10,9 @@
 [submodule "sub_model/nvim-lualine"]
 	path = sub_model/nvim-lualine
 	url = https://github.com/nvim-lualine/lualine.nvim.git
+[submodule "sub_model/lualine"]
+	path = sub_model/lualine
+	url = https://github.com/nvim-lualine/lualine.nvim
+[submodule "sub_model/project"]
+	path = sub_model/project
+	url = https://github.com/ahmedkhalf/project.nvim

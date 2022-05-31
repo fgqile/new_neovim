@@ -7,7 +7,6 @@ local default_config = {
     map = '<M-e>',
     chars = { '{', '[', '(', '"', "'" },
     pattern = string.gsub([[ [%'%"%)%>%]%)%}%,] ]], '%s+', ''),
-    offset = -1, -- Offset from pattern match
     end_key = '$',
     keys = 'qwertyuiopzxcvbnmasdfghjkl',
     highlight = 'Search',
@@ -56,13 +55,30 @@ M.show = function(line)
         local list_pos = {}
         local index = 1
         local str_length = #line
-        local offset = config.offset
+        local offset = -1
+        local is_end_key = true
         for i = col + 2, #line, 1 do
             local char = line:sub(i, i)
-            if string.match(char, config.pattern) then
+            local char2 = line:sub(i - 1, i)
+            if
+                string.match(char, config.pattern)
+                or (char == ' ' and string.match(char2, '%w'))
+            then
                 local key = config.keys:sub(index, index)
                 index = index + 1
-                if utils.is_quote(char) then
+                if
+                    utils.is_quote(char)
+                    or (
+                        utils.is_close_bracket(char)
+                        and utils.is_in_quotes(line, col, prev_char)
+                    )
+                then
+                    offset = 0
+                end
+
+                if i == str_length then
+                    is_end_key = false
+                    key = config.end_key
                     offset = 0
                 end
                 table.insert(
@@ -72,10 +88,12 @@ M.show = function(line)
             end
         end
 
-        table.insert(
-            list_pos,
-            { col = str_length + 1, key = config.end_key, pos = str_length + 1}
-        )
+        if is_end_key then
+            table.insert(
+                list_pos,
+                { col = str_length + 1, key = config.end_key, pos = str_length + 1 }
+            )
+        end
 
         M.highlight_wrap(list_pos, row, col, #line)
         vim.defer_fn(function()
@@ -83,7 +101,7 @@ M.show = function(line)
             vim.api.nvim_buf_clear_namespace(0, M.ns_fast_wrap, row, row + 1)
             for _, pos in pairs(list_pos) do
                 if char == pos.key then
-                    M.move_bracket(line, pos.col, end_pair,false)
+                    M.move_bracket(line, pos.col, end_pair, false)
                     break
                 end
                 if char == string.upper(pos.key) then
@@ -99,11 +117,11 @@ M.show = function(line)
 end
 
 M.move_bracket = function(line, target_pos, end_pair, change_pos)
+    log.debug(target_pos)
     line = line or utils.text_get_current_line(0)
     local row, col = utils.get_cursor()
     local _, next_char = utils.text_cusor_line(line, col, 1, 1, false)
     -- remove an autopairs if that exist
-    -- ((fsadfsa)) dsafdsa
     if next_char == end_pair then
         line = line:sub(1, col) .. line:sub(col + 2, #line)
         target_pos = target_pos - 1
@@ -111,8 +129,8 @@ M.move_bracket = function(line, target_pos, end_pair, change_pos)
 
     line = line:sub(1, target_pos) .. end_pair .. line:sub(target_pos + 1, #line)
     vim.api.nvim_set_current_line(line)
-    if  change_pos then
-        vim.api.nvim_win_set_cursor(0,{row + 1, target_pos})
+    if change_pos then
+        vim.api.nvim_win_set_cursor(0, { row + 1, target_pos })
     end
 end
 

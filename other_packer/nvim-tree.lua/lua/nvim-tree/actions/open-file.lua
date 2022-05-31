@@ -58,6 +58,25 @@ local function pick_window()
   local laststatus = vim.o.laststatus
   vim.o.laststatus = 2
 
+  local not_selectable = vim.tbl_filter(function(id)
+    return not vim.tbl_contains(selectable, id)
+  end, win_ids)
+
+  if laststatus == 3 then
+    for _, win_id in ipairs(not_selectable) do
+      local ok_status, statusline = pcall(api.nvim_win_get_option, win_id, "statusline")
+      local ok_hl, winhl = pcall(api.nvim_win_get_option, win_id, "winhl")
+
+      win_opts[win_id] = {
+        statusline = ok_status and statusline or "",
+        winhl = ok_hl and winhl or "",
+      }
+
+      -- Clear statusline for windows not selectable
+      api.nvim_win_set_option(win_id, "statusline", " ")
+    end
+  end
+
   -- Setup UI
   for _, id in ipairs(selectable) do
     local char = M.window_picker.chars:sub(i, i)
@@ -92,7 +111,19 @@ local function pick_window()
     end
   end
 
+  if laststatus == 3 then
+    for _, id in ipairs(not_selectable) do
+      for opt, value in pairs(win_opts[id]) do
+        api.nvim_win_set_option(id, opt, value)
+      end
+    end
+  end
+
   vim.o.laststatus = laststatus
+
+  if not vim.tbl_contains(vim.split(M.window_picker.chars, ""), resp) then
+    return
+  end
 
   return win_map[resp]
 end
@@ -149,7 +180,11 @@ function M.fn(mode, filename)
   if not M.window_picker.enable or mode == "edit_no_picker" then
     target_winid = lib.target_winid
   else
-    target_winid = pick_window()
+    local pick_window_id = pick_window()
+    if pick_window_id == nil then
+      return
+    end
+    target_winid = pick_window_id
   end
 
   if target_winid == -1 then
@@ -158,6 +193,15 @@ function M.fn(mode, filename)
 
   local do_split = mode == "split" or mode == "vsplit"
   local vertical = mode ~= "split"
+
+  -- Check if file is already loaded in a buffer
+  local buf_loaded = false
+  for _, buf_id in ipairs(api.nvim_list_bufs()) do
+    if api.nvim_buf_is_loaded(buf_id) and filename == api.nvim_buf_get_name(buf_id) then
+      buf_loaded = true
+      break
+    end
+  end
 
   -- Check if filename is already open in a window
   local found = false
@@ -203,6 +247,7 @@ function M.fn(mode, filename)
     cmd = cmd .. vim.fn.fnameescape(filename)
     api.nvim_set_current_win(target_winid)
     pcall(vim.cmd, cmd)
+    lib.set_target_win()
   end
 
   if M.resize_window then
@@ -210,6 +255,18 @@ function M.fn(mode, filename)
   end
 
   if mode == "preview" then
+    if not buf_loaded then
+      vim.bo.bufhidden = "delete"
+
+      api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+        group = api.nvim_create_augroup("RemoveBufHidden", {}),
+        buffer = api.nvim_get_current_buf(),
+        callback = function()
+          vim.bo.bufhidden = ""
+        end,
+        once = true,
+      })
+    end
     view.focus()
     return
   end

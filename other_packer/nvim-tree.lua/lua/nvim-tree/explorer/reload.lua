@@ -9,22 +9,10 @@ local sorters = require "nvim-tree.explorer.sorters"
 
 local M = {}
 
-local function key_by(nodes, key)
-  local v = {}
-  for _, node in ipairs(nodes) do
-    v[node[key]] = node
-  end
-  return v
-end
-
 local function update_status(nodes_by_path, node_ignored, status)
   return function(node)
     if nodes_by_path[node.absolute_path] then
-      if node.nodes then
-        node.git_status = builders.get_dir_git_status(node_ignored, status, node.absolute_path)
-      else
-        node.git_status = builders.get_git_status(node_ignored, status, node.absolute_path)
-      end
+      common.update_git_status(node, node_ignored, status)
     end
     return node
   end
@@ -46,7 +34,7 @@ function M.reload(node, status)
   local child_names = {}
 
   local node_ignored = node.git_status == "!!"
-  local nodes_by_path = key_by(node.nodes, "absolute_path")
+  local nodes_by_path = utils.key_by(node.nodes, "absolute_path")
   while true do
     local name, t = uv.fs_scandir_next(handle)
     if not name then
@@ -59,11 +47,11 @@ function M.reload(node, status)
       child_names[abs] = true
       if not nodes_by_path[abs] then
         if t == "directory" and uv.fs_access(abs, "R") then
-          table.insert(node.nodes, builders.folder(abs, name, status, node_ignored))
+          table.insert(node.nodes, builders.folder(node, abs, name, status, node_ignored))
         elseif t == "file" then
-          table.insert(node.nodes, builders.file(abs, name, status, node_ignored))
+          table.insert(node.nodes, builders.file(node, abs, name, status, node_ignored))
         elseif t == "link" then
-          local link = builders.link(abs, name, status, node_ignored)
+          local link = builders.link(node, abs, name, status, node_ignored)
           if link.link_to ~= nil then
             table.insert(node.nodes, link)
           end

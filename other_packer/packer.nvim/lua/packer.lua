@@ -45,13 +45,7 @@ local config_defaults = {
     },
     depth = 1,
     clone_timeout = 60,
-
-    --default_url_format = 'https://codechina.csdn.net/mirrors/wbthomason/%s.git',
     default_url_format = 'https://github.com/%s.git',
-    --default_url_format = "https://hub.fastgit.xyz/%s",
-    --default_url_format = "https://mirror.ghproxy.com/https://github.com/%s",
-    --default_url_format = "https://gitcode.net/mirrors/%s",
-    -- default_url_format = "https://gitclone.com/github.com/%s",
   },
   display = {
     non_interactive = false,
@@ -73,6 +67,7 @@ local config_defaults = {
   luarocks = { python_cmd = 'python' },
   log = { level = 'warn' },
   profile = { enable = false },
+  autoremove = false,
 }
 
 --- Initialize global namespace for use for callbacks and other data generated whilst packer is
@@ -198,14 +193,7 @@ manage = function(plugin_data)
     return
   end
 
-  local path = vim.fn.expand(plugin_spec[1])
-  local name_segments = vim.split(path, util.get_separator())
-  local segment_idx = #name_segments
-  local name = plugin_spec.as or name_segments[segment_idx]
-  while name == '' and segment_idx > 0 do
-    name = name_segments[segment_idx]
-    segment_idx = segment_idx - 1
-  end
+  local name, path = util.get_plugin_short_name(plugin_spec)
 
   if name == '' then
     log.warn('"' .. plugin_spec[1] .. '" is an invalid plugin name!')

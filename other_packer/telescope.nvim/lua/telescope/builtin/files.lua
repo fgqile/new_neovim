@@ -72,6 +72,14 @@ files.live_grep = function(opts)
     additional_args = opts.additional_args(opts)
   end
 
+  if opts.type_filter then
+    additional_args[#additional_args + 1] = "--type=" .. opts.type_filter
+  end
+
+  if opts.glob_pattern then
+    additional_args[#additional_args + 1] = "--glob=" .. opts.glob_pattern
+  end
+
   local live_grepper = finders.new_job(function(prompt)
     -- TODO: Probably could add some options for smart case and whatever else rg offers.
 
@@ -250,7 +258,6 @@ local function prepare_match(entry, kind)
   local entries = {}
 
   if entry.node then
-    entry["kind"] = vim.F.if_nil(kind, "")
     table.insert(entries, entry)
   else
     for name, item in pairs(entry) do
@@ -288,6 +295,7 @@ files.treesitter = function(opts)
   for _, definition in ipairs(ts_locals.get_definitions(opts.bufnr)) do
     local entries = prepare_match(ts_locals.get_local_nodes(definition))
     for _, entry in ipairs(entries) do
+      entry.kind = vim.F.if_nil(entry.kind, "")
       table.insert(results, entry)
     end
   end
@@ -431,10 +439,12 @@ files.tags = function(opts)
           local selection = action_state.get_selected_entry()
 
           if selection.scode then
-            local scode = string.gsub(selection.scode, "[$]$", "")
-            scode = string.gsub(scode, [[\\]], [[\]])
-            scode = string.gsub(scode, [[\/]], [[/]])
-            scode = string.gsub(scode, "[*]", [[\*]])
+            -- un-escape / then escape required
+            -- special chars for vim.fn.search()
+            -- ] ~ *
+            local scode = selection.scode:gsub([[\/]], "/"):gsub("[%]~*]", function(x)
+              return "\\" .. x
+            end)
 
             vim.cmd "norm! gg"
             vim.fn.search(scode)

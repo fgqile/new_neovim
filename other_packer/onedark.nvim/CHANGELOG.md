@@ -10,9 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - plugin support [ggandor/lightspeed.nvim](https://github.com/ggandor/lightspeed.nvim) #103
+- feat: use native autocmds on nvim >=0.7
 - feat: use typing (types.od.HighlightStyle) inside `theme.lua`
 - feat: add non-exists highlight from `overrides` option in dev mode (fixed #99)
 - enhance: bright & dark colors updated in terminal themes
+- chore: unlink 'Visual' highlight
 
 ### Changed
 
@@ -20,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed #104
 - refactor: implement override func in `util.load`
 - docs: fixed config's default value in README.md
+- fixed projekt0n/github-nvim-theme#172
+- fixed #106
+- fix: use pcall to clear autocmd silently projekt0n/github-nvim-theme#178 ( @xiyaowong )
+- fixed #108
+- fixed: pcall bad argument inside autocmds module
 
 ## [v0.0.4]- 21 Jan 2022
 

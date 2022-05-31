@@ -1,6 +1,5 @@
 -- language specific higlights
 local base = require("gruvbox.base")
-local styles = require("gruvbox.settings").styles
 local utils = require("gruvbox.utils")
 local colors = require("gruvbox.colors")
 
@@ -69,18 +68,19 @@ local elixir = {
 }
 
 local markdown = {
-  markdownItalic = { fg = base.GruvboxFg3.fg, gui = styles.italic },
-  markdownBold = { fg = base.GruvboxFg3.fg, gui = styles.bold },
+  markdownItalic = { fg = base.GruvboxFg3.fg, bold = vim.g.gruvbox_italic },
+  markdownBold = { fg = base.GruvboxFg3.fg, bold = vim.g.gruvbox_bold },
   markdownBoldItalic = {
     fg = base.GruvboxFg3.fg,
-    gui = table.concat({ styles.bold, styles.italic }, ","),
+    bold = vim.g.gruvbox_bold,
+    italic = vim.g.gruvbox_italic,
   },
   markdownH1 = base.GruvboxGreenBold,
-  markdownH2 = "markdownH1",
+  markdownH2 = { link = "markdownH1" },
   markdownH3 = base.GruvboxYellowBold,
-  markdownH4 = "markdownH3",
+  markdownH4 = { link = "markdownH3" },
   markdownH5 = base.GruvboxYellow,
-  markdownH6 = "markdownH5",
+  markdownH6 = { link = "markdownH5" },
   markdownCode = base.GruvboxAqua,
   markdownCodeBlock = base.GruvboxAqua,
   markdownCodeDelimiter = base.GruvboxAqua,
@@ -95,8 +95,8 @@ local markdown = {
   markdownHeadingDelimiter = base.GruvboxOrange,
   markdownUrl = base.GruvboxPurple,
   markdownUrlTitleDelimiter = base.GruvboxGreen,
-  markdownLinkText = { fg = base.GruvboxGray.fg, gui = styles.underline },
-  markdownIdDeclaration = "markdownLinkText",
+  markdownLinkText = { fg = base.GruvboxGray.fg, underline = vim.g.gruvbox_underline },
+  markdownIdDeclaration = { link = "markdownLinkText" },
 }
 
 local haskell = {
@@ -143,27 +143,31 @@ local html = {
   htmlArg = base.GruvboxOrange,
   htmlTagN = base.GruvboxFg1,
   htmlSpecialTagName = base.GruvboxBlue,
-  htmlLink = { fg = colors.fg4, gui = styles.underline },
-  htmlSpecialChar = "GruvboxRed",
-  htmlBold = { fg = colors.fg0, bg = colors.bg0, gui = styles.bold },
+  htmlLink = { fg = colors.fg4, underline = vim.g.gruvbox_underline },
+  htmlSpecialChar = { link = "GruvboxRed" },
+  htmlBold = { fg = colors.fg0, bg = colors.bg0, bold = vim.g.gruvbox_bold },
   htmlBoldUnderline = {
     fg = colors.fg0,
     bg = colors.bg0,
-    gui = table.concat({ styles.bold, styles.underline }, ","),
+    bold = vim.g.gruvbox_bold,
+    underline = vim.g.gruvbox_underline,
   },
-  htmlBoldItalic = { fg = colors.fg0, bg = colors.bg0, gui = table.concat({ styles.bold, styles.italic }, ",") },
+  htmlBoldItalic = { fg = colors.fg0, bg = colors.bg0, bold = vim.g.gruvbox_bold, italic = vim.g.gruvbox_italic },
   htmlBoldUnderlineItalic = {
     fg = colors.fg0,
     bg = colors.bg0,
-    gui = table.concat({ styles.bold, styles.underline, styles.italic }, ","),
+    bold = vim.g.gruvbox_bold,
+    italic = vim.g.gruvbox_italic,
+    underline = vim.g.gruvbox_underline,
   },
-  htmlUnderline = { fg = colors.fg0, bg = colors.bg0, gui = styles.underline },
+  htmlUnderline = { fg = colors.fg0, bg = colors.bg0, underline = vim.g.gruvbox_underline },
   htmlUnderlineItalic = {
     fg = colors.fg0,
     bg = colors.bg0,
-    gui = table.concat({ styles.underline, styles.italic }, ","),
+    italic = vim.g.gruvbox_italic,
+    underline = vim.g.gruvbox_underline,
   },
-  htmlItalic = { fg = colors.fg0, bg = colors.bg0, gui = styles.italic },
+  htmlItalic = { fg = colors.fg0, bg = colors.bg0, bold = vim.g.gruvbox_italic },
 }
 
 local langs = utils.merge({

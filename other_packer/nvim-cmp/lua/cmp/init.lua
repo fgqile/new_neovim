@@ -5,6 +5,7 @@ local feedkeys = require('cmp.utils.feedkeys')
 local autocmd = require('cmp.utils.autocmd')
 local keymap = require('cmp.utils.keymap')
 local misc = require('cmp.utils.misc')
+local async = require('cmp.utils.async')
 
 local cmp = {}
 
@@ -29,6 +30,7 @@ cmp.config.disable = misc.none
 cmp.config.compare = require('cmp.config.compare')
 cmp.config.sources = require('cmp.config.sources')
 cmp.config.mapping = require('cmp.config.mapping')
+cmp.config.window = require('cmp.config.window')
 
 ---Sync asynchronous process.
 cmp.sync = function(callback)
@@ -130,22 +132,17 @@ end)
 cmp.select_next_item = cmp.sync(function(option)
   option = option or {}
 
-  -- Hack: Ignore when executing macro.
-  if vim.fn.reg_executing() ~= '' then
-    return true
-  end
-
   if cmp.core.view:visible() then
     local release = cmp.core:suspend()
     cmp.core.view:select_next_item(option)
     vim.schedule(release)
     return true
   elseif vim.fn.pumvisible() == 1 then
-    -- Special handling for native puma. Required to facilitate key mapping processing.
+    -- Special handling for native pum. Required to facilitate key mapping processing.
     if (option.behavior or cmp.SelectBehavior.Insert) == cmp.SelectBehavior.Insert then
-      feedkeys.call(keymap.t('<C-n>'), 'n')
+      feedkeys.call(keymap.t('<C-n>'), 'in')
     else
-      feedkeys.call(keymap.t('<Down>'), 'n')
+      feedkeys.call(keymap.t('<Down>'), 'in')
     end
     return true
   end
@@ -156,22 +153,17 @@ end)
 cmp.select_prev_item = cmp.sync(function(option)
   option = option or {}
 
-  -- Hack: Ignore when executing macro.
-  if vim.fn.reg_executing() ~= '' then
-    return true
-  end
-
   if cmp.core.view:visible() then
     local release = cmp.core:suspend()
     cmp.core.view:select_prev_item(option)
     vim.schedule(release)
     return true
   elseif vim.fn.pumvisible() == 1 then
-    -- Special handling for native puma. Required to facilitate key mapping processing.
+    -- Special handling for native pum. Required to facilitate key mapping processing.
     if (option.behavior or cmp.SelectBehavior.Insert) == cmp.SelectBehavior.Insert then
-      feedkeys.call(keymap.t('<C-p>'), 'n')
+      feedkeys.call(keymap.t('<C-p>'), 'in')
     else
-      feedkeys.call(keymap.t('<Up>'), 'n')
+      feedkeys.call(keymap.t('<Up>'), 'in')
     end
     return true
   end
@@ -193,11 +185,6 @@ cmp.confirm = cmp.sync(function(option, callback)
   option = option or {}
   callback = callback or function() end
 
-  -- Hack: Ignore when executing macro.
-  if vim.fn.reg_executing() ~= '' then
-    return true
-  end
-
   local e = cmp.core.view:get_selected_entry() or (option.select and cmp.core.view:get_first_entry() or nil)
   if e then
     cmp.core:confirm(e, {
@@ -210,7 +197,7 @@ cmp.confirm = cmp.sync(function(option, callback)
   else
     -- Special handling for native puma. Required to facilitate key mapping processing.
     if vim.fn.complete_info({ 'selected' }).selected ~= -1 then
-      feedkeys.call(keymap.t('<C-y>'), 'n')
+      feedkeys.call(keymap.t('<C-y>'), 'in')
       return true
     end
     return false
@@ -297,39 +284,27 @@ cmp.setup = setmetatable({
   end,
 })
 
-autocmd.subscribe('InsertEnter', function()
-  feedkeys.call('', 'i', function()
-    if config.enabled() then
-      cmp.core:prepare()
-      cmp.core:on_change('InsertEnter')
-    end
-  end)
-end)
-
-autocmd.subscribe('InsertLeave', function()
-  cmp.core:reset()
-  cmp.core.view:close()
-end)
-
-autocmd.subscribe('CmdlineEnter', function()
+-- In InsertEnter autocmd, vim will detects mode=normal unexpectedly.
+local on_insert_enter = function()
   if config.enabled() then
+    cmp.config.compare.scopes:update()
+    cmp.config.compare.locality:update()
     cmp.core:prepare()
     cmp.core:on_change('InsertEnter')
   end
-end)
+end
+autocmd.subscribe({ 'InsertEnter', 'CmdlineEnter' }, async.debounce_next_tick(on_insert_enter))
 
-autocmd.subscribe('CmdlineLeave', function()
-  cmp.core:reset()
-  cmp.core.view:close()
-end)
-
-autocmd.subscribe('TextChanged', function()
+-- async.throttle is needed for performance. The mapping `:<C-u>...<CR>` will fire `CmdlineChanged` for each character.
+local on_text_changed = function()
   if config.enabled() then
     cmp.core:on_change('TextChanged')
   end
-end)
+end
+autocmd.subscribe({ 'TextChangedI', 'TextChangedP' }, on_text_changed)
+autocmd.subscribe('CmdlineChanged', async.debounce_next_tick(on_text_changed))
 
-autocmd.subscribe('CursorMoved', function()
+autocmd.subscribe('CursorMovedI', function()
   if config.enabled() then
     cmp.core:on_moved()
   else
@@ -338,10 +313,18 @@ autocmd.subscribe('CursorMoved', function()
   end
 end)
 
+-- If make this asynchronous, the completion menu will not close when the command output is displayed.
+autocmd.subscribe({ 'InsertLeave', 'CmdlineLeave' }, function()
+  cmp.core:reset()
+  cmp.core.view:close()
+end)
+
 cmp.event:on('complete_done', function(evt)
   if evt.entry then
     cmp.config.compare.recently_used:add_entry(evt.entry)
   end
+  cmp.config.compare.scopes:update()
+  cmp.config.compare.locality:update()
 end)
 
 cmp.event:on('confirm_done', function(evt)

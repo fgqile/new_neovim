@@ -315,7 +315,9 @@ append(
   - "tail"      only display the file name, and not the path
   - "absolute"  display absolute paths
   - "smart"     remove as much from the path as possible to only show
-                the difference between the displayed paths
+                the difference between the displayed paths.
+                Warning: The nature of the algorithm might have a negative
+                performance impact!
   - "shorten"   only display the first character of each directory in
                 the path
   - "truncate"  truncates the start of the path when the whole path will
@@ -417,6 +419,27 @@ append(
   the full filename.
 
   Default: false]]
+)
+
+append(
+  "results_title",
+  "Results",
+  [[
+  Defines the default title of the results window. A false value
+  can be used to hide the title altogether.
+
+  Default: "Results"]]
+)
+
+append(
+  "prompt_title",
+  "Prompt",
+  [[
+  Defines the default title of the prompt window. A false value
+  can be used to hide the title altogether. Most of the times builtins
+  define a prompt_title which will be prefered over this default.
+
+  Default: "Prompt"]]
 )
 
 append(
@@ -629,7 +652,8 @@ append(
   "color_devicons",
   true,
   [[
-  Boolean if devicons should be enabled or not.
+  Boolean if devicons should be enabled or not. If set to false, the
+  "TelescopeResultsFileIcon" highlight group is used.
   Hint: Coloring only works if |termguicolors| is enabled.
 
   Default: true]]

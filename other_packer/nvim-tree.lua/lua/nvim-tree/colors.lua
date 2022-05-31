@@ -1,5 +1,5 @@
 local api = vim.api
-local icons = require "nvim-tree.renderer.icons"
+local icons = require "nvim-tree.renderer.icon-config"
 
 local M = {}
 
@@ -65,6 +65,7 @@ local function get_links()
     EndOfBuffer = "EndOfBuffer",
     CursorLine = "CursorLine",
     VertSplit = "VertSplit",
+    WinSeparator = "NvimTreeVertSplit",
     CursorColumn = "CursorColumn",
     FileDirty = "NvimTreeGitDirty",
     FileNew = "NvimTreeGitNew",
