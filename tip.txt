@@ -1,4 +1,0 @@
-添加子模块的命令：
-
-git submodule add https://github.com/test/subb.git modules/subb
-
